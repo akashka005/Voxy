@@ -2,6 +2,7 @@ import json
 from typing import Optional
 from fastapi import (
     APIRouter,
+    Request,
     UploadFile,
     File,
     Form,
@@ -10,6 +11,8 @@ from fastapi import (
     status,
 )
 from sqlalchemy.orm import Session
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from backend.app.db.session import get_db
 from backend.app.db.repositories.analysis_repo import AnalysisRepository
@@ -24,6 +27,7 @@ from backend.app.services.analysis_service import analysis_service
 from backend.app.services.report_service import report_service
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post(
@@ -32,7 +36,9 @@ router = APIRouter()
     status_code=status.HTTP_202_ACCEPTED,
     summary="Upload audio and create an asynchronous analysis job",
 )
+@limiter.limit("10/minute")
 async def create_analysis_job(
+    request: Request,
     file: UploadFile = File(..., description="Audio file (WAV, MP3, FLAC, M4A)"),
     analysis_options: Optional[str] = Form(None, description="Optional JSON-encoded analysis options"),
     db: Session = Depends(get_db),
