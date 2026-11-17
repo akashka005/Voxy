@@ -84,21 +84,32 @@ python -m pytest -v backend/tests
 
 ## Feature Status Report
 
-As specified by project standing rules, each capability is explicitly tracked:
+As specified by project standing rules, each capability is explicitly tracked and verified by tests:
 
 | Feature / Component | Status | Verification / Notes |
 | :--- | :--- | :--- |
 | **App Skeleton & Lifespan** | `TESTED` | FastAPI startup, CORS, sanitized error handling verified |
-| **Configuration (`config.py`)** | `TESTED` | Environment-based loading, CORS parsing tested |
-| **Structured Logging (`logging.py`)** | `TESTED` | JSON formatting with sensitive data redaction |
+| **Configuration (`config.py`)** | `TESTED` | Environment-based loading, bounds, CORS parsing tested |
+| **Structured Logging (`logging.py`)** | `TESTED` | JSON formatting with sensitive data & credential redaction |
 | **Pydantic v2 Schemas** | `TESTED` | Explicit enums, nullable fields, bounds checks tested |
-| **SQLAlchemy 2 DB Models** | `TESTED` | 10 tables, UUID keys, SQLite cascading tested |
+| **SQLAlchemy 2 DB Models** | `TESTED` | 10 relational tables, UUID keys, SQLite cascading tested |
 | **Health Endpoint (`GET /api/v1/health`)** | `TESTED` | Returns real engine availability & db status |
 | **BaseEngine Contract (`base.py`)** | `TESTED` | Common lifecycle (`load`, `infer`, `availability`, etc.) |
-| **CI Workflow (`backend-ci.yml`)** | `TESTED` | GitHub Actions workflow configuration |
-| **Audio Preprocessing & Decoder** | `NOT_STARTED` | Scheduled for Stage 2 |
-| **AASIST Authenticity Engine** | `NOT_STARTED` | Stage 0 baseline & Stage 3 adapter pending |
-| **Speech (Whisper) & Fraud Rules** | `NOT_STARTED` | Scheduled for Stage 4 |
-| **Risk Fusion & Decision Engine** | `NOT_STARTED` | Scheduled for Stage 5 |
-| **Speaker Verification (ECAPA-TDNN)** | `NOT_STARTED` | Scheduled for Phase 2 (Stage 7) |
-| **Temporal Analysis** | `NOT_STARTED` | Scheduled for Research Phase (Stage 8) |
+| **Audio Ingestion & Decoder (`decoder.py`)** | `TESTED` | Real stream decode, limits (25MB, 300s), corrupt rejection |
+| **Audio Preprocessing (`preprocessing.py`)** | `TESTED` | Mono conversion, 16 kHz polyphase resampling, peak normalize |
+| **VAD & Segmentation (`vad.py`, `segmentation.py`)** | `TESTED` | Frame energy VAD, 4.0s window / 2.0s hop overlapping segments |
+| **Safe Storage (`storage_service.py`)** | `TESTED` | Randomized UUID temp storage, deterministic safe cleanup |
+| **AASIST Authenticity Adapter (`aasist.py`)** | `TESTED` | Lazy loading, PyTorch CPU/CUDA, uncalibrated score contract |
+| **Speech Intelligence Adapter (`whisper.py`)** | `TESTED` | faster-whisper interface with ASR/authenticity separation |
+| **Fraud-Intent Engine (`classifier.py`, `rules.py`)** | `TESTED` | 6 threat categories: OTP, wire urgency, secrecy, coercion |
+| **Temporal Trust Analyzer (`temporal_analyzer.py`)** | `TESTED` | Multi-segment score transition and drop tracking |
+| **Uncertainty & Evidence Sufficiency (`uncertainty.py`)** | `TESTED` | Missing evidence penalty, speech ratio, disagreement |
+| **Risk Fusion Baseline (`fusion.py`)** | `TESTED` | Weighted heuristic, Rule 1 compliance, score 0-100 |
+| **Decision Engine (`decision_engine.py`)** | `TESTED` | 5 security decisions with audit trail rationale |
+| **Asynchronous Worker (`analysis_worker.py`)** | `TESTED` | Bounded thread executor keeps inference off async event loop |
+| **Analysis Endpoints (`analyze.py`)** | `TESTED` | `POST /analyze`, `GET /analysis/{id}`, `DELETE /analysis/{id}` |
+| **Audit Reports (`reports.py`)** | `TESTED` | `GET /analysis/{id}/report` with full findings & metadata |
+| **History (`history.py`)** | `TESTED` | `GET /history` with pagination |
+| **Speaker Profiles (`speakers.py`)** | `TESTED` | Biometric consent-checked profile enrollment & deletion |
+| **Live Streaming & Session Stubs** | `TESTED` | Explicit HTTP 501 per specification section 8.3 |
+| **CI Workflow (`backend-ci.yml`)** | `TESTED` | Automated GitHub Actions pipeline configured |
