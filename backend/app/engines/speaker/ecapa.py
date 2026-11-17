@@ -10,11 +10,12 @@ Rule: Never fabricate similarity scores. Return UNAVAILABLE until implemented.
 from __future__ import annotations
 
 import logging
-from typing import Optional
-
+from typing import Any, List, Optional
 import numpy as np
 
-from backend.app.engines.base import BaseEngine, EngineResult, EngineStatus
+from backend.app.engines.base import BaseEngine
+from backend.app.schemas.common import EngineStatus, EngineMetadata, SpeakerMatchStatus
+from backend.app.schemas.speaker import SpeakerVerificationResult
 
 logger = logging.getLogger("voxsentinel")
 
@@ -33,26 +34,35 @@ class ECAPATDNNEngine(BaseEngine):
     Until Phase 2 is implemented this engine always returns UNAVAILABLE.
     """
 
-    name = "ecapa_tdnn"
-    version = "0.0.0-phase2-stub"
+    engine_name = "speaker_ecapa"
 
     def __init__(self) -> None:
         self._available = False
-        logger.info(
-            "ECAPATDNNEngine: Phase 2 — speaker embedding inference not yet implemented. "
-            "Returning UNAVAILABLE for all requests."
+        self._limitations = [
+            "ECAPA-TDNN embedding inference not implemented in Phase 1.",
+            "Planned integration with SpeechBrain in Phase 2."
+        ]
+
+    def load(self) -> None:
+        pass
+
+    def availability(self) -> EngineStatus:
+        return EngineStatus.UNAVAILABLE
+
+    def metadata(self) -> EngineMetadata:
+        return EngineMetadata(
+            engine_name=self.engine_name,
+            model_name="ecapa-tdnn",
+            version="0.0.0-phase2-stub",
+            device="cpu",
+            details={"phase": 2, "planned_backend": "speechbrain/spkrec-ecapa-voxceleb"}
         )
 
-    @property
-    def is_available(self) -> bool:
-        return self._available
+    def limitations(self) -> List[str]:
+        return list(self._limitations)
 
-    def embed(self, waveform: np.ndarray, sample_rate: int) -> Optional[np.ndarray]:
-        """
-        Extract a d-vector embedding from an audio waveform.
-
-        Returns None until Phase 2 is implemented.
-        """
+    def embed(self, waveform: np.ndarray, sample_rate: int = 16000) -> Optional[np.ndarray]:
+        """Extract a d-vector embedding from an audio waveform."""
         return None
 
     def compare(
@@ -60,39 +70,18 @@ class ECAPATDNNEngine(BaseEngine):
         embedding_a: np.ndarray,
         embedding_b: np.ndarray,
     ) -> Optional[float]:
-        """
-        Compute cosine similarity between two embeddings.
-
-        Returns None until Phase 2 is implemented.
-        """
+        """Compute cosine similarity between two embeddings."""
         return None
 
-    def run(
-        self,
-        waveform: np.ndarray,
-        sample_rate: int,
-        enrolled_embedding: Optional[np.ndarray] = None,
-    ) -> EngineResult:
+    def infer(self, payload: Any) -> SpeakerVerificationResult:
         """
         Run speaker verification against an enrolled embedding.
-
-        Args:
-            waveform: Audio waveform (mono float32, 16 kHz).
-            sample_rate: Sample rate (expected 16000).
-            enrolled_embedding: Pre-computed d-vector for the enrolled speaker.
-
-        Returns:
-            EngineResult with status=UNAVAILABLE and null scores.
+        Always returns UNAVAILABLE in Phase 1 without fabricating scores.
         """
-        return EngineResult(
-            engine_name=self.name,
-            engine_version=self.version,
-            status=EngineStatus.UNAVAILABLE,
-            score=None,
-            confidence=None,
-            metadata={
-                "phase": 2,
-                "reason": "ECAPA-TDNN embedding inference not yet implemented",
-                "planned_backend": "speechbrain/spkrec-ecapa-voxceleb",
-            },
+        return SpeakerVerificationResult(
+            availability=EngineStatus.UNAVAILABLE,
+            status=SpeakerMatchStatus.INCONCLUSIVE,
+            similarity=None,
+            enrolled_profile_id=None,
+            limitations=self.limitations(),
         )
