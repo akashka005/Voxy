@@ -1,0 +1,6 @@
+{
+  "name": "VoxSentinel – Threat Assessment",
+  "description": "Forensic voice intelligence dashboard for multi-engine deepfake detection, speaker verification, and social engineering threat assessment.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

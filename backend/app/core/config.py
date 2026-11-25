@@ -18,7 +18,13 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     API_KEY: str = "development_secret_key_change_in_production"
     
-    CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    CORS_ORIGINS: Union[List[str], str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://0.0.0.0:3000",
+    ]
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
