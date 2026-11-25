@@ -27,6 +27,7 @@ class AnalysisCreateResponse(BaseModel):
 
 class AnalysisResponse(BaseModel):
     analysis_id: str
+    filename: Optional[str] = None
     status: JobStatus
     created_at: datetime
     completed_at: Optional[datetime] = None

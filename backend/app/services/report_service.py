@@ -123,6 +123,7 @@ class ReportService:
 
         return AnalysisResponse(
             analysis_id=analysis.id,
+            filename=analysis.filename,
             status=JobStatus(analysis.status),
             created_at=analysis.created_at,
             completed_at=analysis.completed_at,

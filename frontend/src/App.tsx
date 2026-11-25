@@ -197,6 +197,14 @@ function WorkspaceShell() {
   const location = useLocation();
   const { soundEnabled, toggleSound } = useTactileAudio();
 
+  // Clear stale localStorage mock data from prior sessions
+  const WORKSPACE_VERSION = 'v2-live-backend';
+  if (typeof window !== 'undefined' &&
+      localStorage.getItem('voxsentinel_workspace_version') !== WORKSPACE_VERSION) {
+    clearWorkspaceState();
+    localStorage.setItem('voxsentinel_workspace_version', WORKSPACE_VERSION);
+  }
+
   const initialPersisted = useRef(
     loadWorkspaceState({
       cases: SECONDARY_CASES,

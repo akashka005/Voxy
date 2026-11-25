@@ -33,8 +33,9 @@ def test_health_endpoint(client: TestClient):
     # By default, without configured checkpoints, status must be UNAVAILABLE
     assert engines["authenticity"]["status"] == "UNAVAILABLE"
     assert engines["speaker_verification"]["status"] == "UNAVAILABLE"
-    assert engines["speech_intelligence"]["status"] == "UNAVAILABLE"
-    assert engines["fraud_intelligence"]["status"] == "UNAVAILABLE"
+    # Whisper (faster-whisper) and Fraud (rule engine) are always available
+    assert engines["speech_intelligence"]["status"] == "AVAILABLE"
+    assert engines["fraud_intelligence"]["status"] == "AVAILABLE"
     assert engines["temporal_analysis"]["status"] == "UNAVAILABLE"
     assert engines["risk_fusion"]["status"] == "UNAVAILABLE"
 

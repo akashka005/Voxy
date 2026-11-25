@@ -30,15 +30,47 @@ interface OverviewPageProps {
   onSelectCase: (caseId: string) => void;
 }
 
-const VOLUME_SERIES = [
-  { hour: '02:00', calls: 38, flagged: 4 },
-  { hour: '03:00', calls: 44, flagged: 6 },
-  { hour: '04:00', calls: 52, flagged: 5 },
-  { hour: '05:00', calls: 71, flagged: 9 },
-  { hour: '06:00', calls: 96, flagged: 14 },
-  { hour: '07:00', calls: 124, flagged: 19 },
-  { hour: '08:00', calls: 112, flagged: 15 },
-];
+/** Compute call-volume chart data from real case history instead of hardcoded values. */
+function computeVolumeSeries(
+  cases: AssessmentCase[],
+  range: '24H' | '7D',
+): { hour: string; calls: number; flagged: number }[] {
+  const isFlagged = (c: AssessmentCase) =>
+    c.threatScore.riskLevel === 'CRITICAL' || c.threatScore.riskLevel === 'HIGH';
+
+  if (range === '7D') {
+    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return dayLabels.map((day, i) => {
+      const dayCases = cases.filter((c) => {
+        const d = new Date(c.summary.analysisTime);
+        // getDay(): 0=Sun … 6=Sat → map to Mon-first index
+        return ((d.getDay() + 6) % 7) === i;
+      });
+      return { hour: day, calls: dayCases.length, flagged: dayCases.filter(isFlagged).length };
+    });
+  }
+
+  // 24H: bucket by hour label for the last 24 h
+  const now = new Date();
+  const buckets: { hour: string; calls: number; flagged: number }[] = [];
+  for (let h = 23; h >= 0; h--) {
+    const d = new Date(now.getTime() - h * 3_600_000);
+    buckets.push({ hour: `${String(d.getHours()).padStart(2, '0')}:00`, calls: 0, flagged: 0 });
+  }
+  cases.forEach((c) => {
+    const d = new Date(c.summary.analysisTime);
+    const diffH = Math.floor((now.getTime() - d.getTime()) / 3_600_000);
+    if (diffH >= 0 && diffH < 24) {
+      const idx = 23 - diffH;
+      buckets[idx].calls++;
+      if (isFlagged(c)) buckets[idx].flagged++;
+    }
+  });
+  // Show last 8 h for a tidy chart; show at least all non-zero buckets
+  const nonZeroStart = buckets.findIndex((b) => b.calls > 0);
+  const start = nonZeroStart >= 0 ? Math.max(0, Math.min(nonZeroStart, 16)) : 16;
+  return buckets.slice(start);
+}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -61,14 +93,7 @@ export function OverviewPage({
   const [rangeFilter, setRangeFilter] = useState<'24H' | '7D'>('24H');
 
   const metrics = computeOverviewMetrics(cases);
-  const seriesData =
-    rangeFilter === '24H'
-      ? VOLUME_SERIES
-      : VOLUME_SERIES.map((pt, i) => ({
-          hour: `Day ${i + 1}`,
-          calls: pt.calls * 7,
-          flagged: pt.flagged * 6,
-        }));
+  const seriesData = computeVolumeSeries(cases, rangeFilter);
 
   const handleOpenCase = (caseId: string) => {
     onSelectCase(caseId);

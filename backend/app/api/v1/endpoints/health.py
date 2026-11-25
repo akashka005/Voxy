@@ -58,15 +58,15 @@ def get_health(db: Session = Depends(get_db)) -> HealthResponse:
         ),
         "speech_intelligence": EngineHealthStatus(
             engine_name="Speech Intelligence / ASR",
-            status=EngineStatus.UNAVAILABLE,
+            status=EngineStatus.AVAILABLE,
             details=f"faster-whisper ({settings.WHISPER_MODEL}) int8 on {settings.WHISPER_DEVICE}",
-            limitations=["Scheduled for Stage 4 implementation."]
+            limitations=["Downloads model weights (~74 MB) on first inference if not cached."]
         ),
         "fraud_intelligence": EngineHealthStatus(
             engine_name="Fraud Intent Analysis",
-            status=EngineStatus.UNAVAILABLE,
-            details="Rule-based social engineering detection baseline",
-            limitations=["Scheduled for Stage 4 implementation; independent of voice authenticity."]
+            status=EngineStatus.AVAILABLE,
+            details="Rule-based social engineering detection — 6 compiled regex patterns",
+            limitations=["Pattern-based; not a learned classifier. Independent of voice authenticity."]
         ),
         "temporal_analysis": EngineHealthStatus(
             engine_name="Temporal Trust Analysis",
