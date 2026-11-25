@@ -1314,6 +1314,4 @@ Scopes: api | engine | frontend | db | pipeline | ui
 
 **Built with ❤️ for voice security**
 
-[🐛 Report Bug](https://github.com/akashka005/Voxy/issues) · [✨ Request Feature](https://github.com/akashka005/Voxy/issues) · [📖 Docs](https://github.com/akashka005/Voxy)
-
 </div>
