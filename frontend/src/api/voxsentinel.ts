@@ -503,7 +503,9 @@ export function transformBackendAnalysisToCase(
           ? 'High-confidence social engineering indicators detected.'
           : score > 40
             ? 'Moderate risk indicators flagged for review.'
-            : 'Natural vocal tract harmonics with low threat probability.'),
+            : backend.authenticity?.availability === 'AVAILABLE'
+              ? 'Natural vocal tract harmonics with low threat probability.'
+              : 'Unverified acoustic channel with low conversational threat probability.'),
     },
     engines: {
       voiceAuthenticity: {
@@ -524,10 +526,21 @@ export function transformBackendAnalysisToCase(
       speechIntelligence: {
         status: (backend.speech_intelligence?.availability as EngineAvailability) || 'UNAVAILABLE',
         language: backend.speech_intelligence?.language || 'en',
-        confidence: 94,
+        confidence: backend.speech_intelligence?.segments?.length
+          ? Math.round(
+              (backend.speech_intelligence.segments.reduce(
+                (acc, s) => acc + (s.confidence ?? 0.9),
+                0,
+              ) /
+                backend.speech_intelligence.segments.length) *
+                100,
+            )
+          : backend.speech_intelligence?.transcript
+            ? 92
+            : 0,
         transcript:
           backend.speech_intelligence?.transcript ||
-          (backend.status === 'COMPLETED' ? 'No audible transcript detected.' : 'Audio analysis in progress...'),
+          (backend.status === 'COMPLETED' ? 'No audible speech detected.' : 'Audio analysis in progress...'),
       },
       fraudIntent: {
         status: (backend.fraud_intelligence?.availability as EngineAvailability) || 'UNAVAILABLE',

@@ -101,7 +101,11 @@ class RiskFusionEngine:
         elif auth_has_data and not fraud_has_data:
             baseline_score = auth_risk_score
         elif fraud_has_data and not auth_has_data:
-            baseline_score = fraud_risk_score
+            # Missing authenticity evidence cannot yield 0.0 risk.
+            # An unverified voice channel carries baseline uncertainty (18.0) when fraud is benign.
+            baseline_score = max(fraud_risk_score, 18.0)
+            if fraud_risk_score == 0.0:
+                contributing_factors.append("Acoustic authenticity unverified (baseline uncertainty applied)")
         else:
             # Both available: weigh independent factors
             # High fraud alone or high spoof alone elevates the overall risk!

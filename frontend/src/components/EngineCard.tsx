@@ -89,7 +89,9 @@ export function EngineCard({
         <div className="grid grid-cols-2 gap-3 my-2 items-center relative">
           <div>
             <div className="text-[28px] leading-none font-bold text-[#0F1B3D] tabular-nums">
-              {voiceAuthenticity.syntheticProbability.toFixed(1)}%
+              {voiceAuthenticity.status === 'AVAILABLE'
+                ? `${voiceAuthenticity.syntheticProbability.toFixed(1)}%`
+                : '—'}
             </div>
             <div className="text-[11.5px] font-medium text-[#5B6785] mt-1">
               Synthetic Probability
@@ -98,7 +100,9 @@ export function EngineCard({
 
           <div className="border-l border-[#0F1B3D]/10 pl-3.5">
             <div className="text-[28px] leading-none font-bold text-[#0F1B3D] tabular-nums">
-              {voiceAuthenticity.confidence}%
+              {voiceAuthenticity.status === 'AVAILABLE'
+                ? `${voiceAuthenticity.confidence}%`
+                : '—'}
             </div>
             <div className="text-[11.5px] font-medium text-[#5B6785] mt-1">Confidence</div>
           </div>
@@ -131,7 +135,11 @@ export function EngineCard({
           </svg>
           <div className="flex items-center gap-1.5 text-[11.5px] text-[#475577] mt-0.5">
             <Info className="w-3.5 h-3.5 text-[#5B6785] shrink-0" aria-hidden="true" />
-            <span className="truncate">Model: {voiceAuthenticity.model}</span>
+            <span className="truncate">
+              {voiceAuthenticity.status === 'AVAILABLE'
+                ? `Model: ${voiceAuthenticity.model}`
+                : 'Checkpoint unconfigured; anti-spoofing deferred'}
+            </span>
           </div>
         </div>
       </article>
@@ -204,14 +212,14 @@ export function EngineCard({
         <div className="grid grid-cols-2 gap-3 my-1.5 items-center">
           <div>
             <div className="text-[28px] leading-none font-bold text-[#0F1B3D]">
-              {speechIntelligence.language}
+              {speechIntelligence.status === 'AVAILABLE' ? speechIntelligence.language : '—'}
             </div>
             <div className="text-[11.5px] font-medium text-[#5B6785] mt-1">Language</div>
           </div>
 
           <div className="border-l border-[#0F1B3D]/10 pl-3.5">
             <div className="text-[28px] leading-none font-bold text-[#0F1B3D] tabular-nums">
-              {speechIntelligence.confidence}%
+              {speechIntelligence.status === 'AVAILABLE' ? `${speechIntelligence.confidence}%` : '—'}
             </div>
             <div className="text-[11.5px] font-medium text-[#5B6785] mt-1">Confidence</div>
           </div>

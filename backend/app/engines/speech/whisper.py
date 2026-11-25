@@ -1,5 +1,9 @@
+import os
 from typing import List, Optional, Any
 import numpy as np
+
+# Ensure Hugging Face Hub uses local public cache without failing on expired user tokens
+os.environ["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1"
 
 from backend.app.core.config import settings
 from backend.app.core.logging import logger
