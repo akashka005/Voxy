@@ -2,8 +2,6 @@ from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from backend.app.core.config import settings
-
-# For SQLite, check_same_thread=False is needed when multithreaded workers are used
 connect_args = {}
 if settings.DATABASE_URL.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
@@ -20,15 +18,11 @@ Base = declarative_base()
 
 
 def get_db() -> Generator[Session, None, None]:
-    """Dependency that provides a database session and safely closes it."""
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-
-
 def init_db() -> None:
-    """Creates database tables if they do not exist."""
     from backend.app.db import models  # noqa: F401
     Base.metadata.create_all(bind=engine)

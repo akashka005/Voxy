@@ -6,18 +6,12 @@ from backend.app.api.v1.endpoints import (
     history,
     speakers,
 )
-
 api_router = APIRouter()
-
-# Register core endpoint modules
 api_router.include_router(health.router, tags=["Health"])
 api_router.include_router(analyze.router, tags=["Analysis"])
 api_router.include_router(reports.router, tags=["Reports"])
 api_router.include_router(history.router, tags=["History"])
 api_router.include_router(speakers.router, tags=["Speaker Profiles"])
-
-
-# Streaming & Call Sessions Stubs (Phase 4, explicit 501 as mandated by spec 8.3)
 @api_router.post(
     "/sessions",
     tags=["Live & Telephony"],
@@ -28,7 +22,6 @@ def create_session_stub():
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
         detail="Simulated-call sessions are scheduled for Phase 4 live telephony integration.",
     )
-
 
 @api_router.websocket("/stream/{session_id}")
 async def websocket_stream_stub(session_id: str):

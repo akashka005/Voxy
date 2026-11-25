@@ -70,15 +70,11 @@ class AnalysisRepository:
         analysis = self.get_analysis(analysis_id)
         if not analysis:
             return None
-
-        # Update analysis summary
         analysis.status = "COMPLETED"
         analysis.completed_at = datetime.now(timezone.utc)
         analysis.risk_score = assessment.risk_score
         analysis.risk_level = assessment.risk_level.value
         analysis.decision = assessment.decision.value
-
-        # 1. Save audio metadata
         audio_meta = AudioMetadata(
             analysis_id=analysis_id,
             duration_seconds=decoded.duration_seconds,
@@ -88,8 +84,6 @@ class AnalysisRepository:
             file_size_bytes=decoded.file_size_bytes,
         )
         self.db.add(audio_meta)
-
-        # 2. Save Authenticity
         if authenticity:
             auth_model = AuthenticityResultModel(
                 analysis_id=analysis_id,
@@ -100,8 +94,6 @@ class AnalysisRepository:
                 raw_scores=[s.model_dump() for s in authenticity.segments] if authenticity.segments else None,
             )
             self.db.add(auth_model)
-
-        # 3. Save Transcript
         if speech and speech.transcript is not None:
             transcript_model = TranscriptModel(
                 analysis_id=analysis_id,
@@ -110,8 +102,6 @@ class AnalysisRepository:
                 segments=[s.model_dump() for s in speech.segments] if speech.segments else None,
             )
             self.db.add(transcript_model)
-
-        # 4. Save Fraud Results
         if fraud:
             fraud_model = FraudResultModel(
                 analysis_id=analysis_id,
@@ -119,8 +109,6 @@ class AnalysisRepository:
                 evidence=[e.model_dump() for e in fraud.evidence] if fraud.evidence else [],
             )
             self.db.add(fraud_model)
-
-        # 5. Save Risk Assessment
         risk_model = RiskAssessmentModel(
             analysis_id=analysis_id,
             fusion_version="1.0.0-baseline",
@@ -130,8 +118,6 @@ class AnalysisRepository:
             decision=assessment.decision.value,
         )
         self.db.add(risk_model)
-
-        # 6. Save Evidence Items
         if evidence:
             for item in evidence:
                 ev_model = EvidenceItemModel(

@@ -36,8 +36,6 @@ class Analysis(Base):
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, default=get_utc_now, nullable=False, index=True)
     completed_at = Column(DateTime, nullable=True)
-
-    # Relationships
     audio_metadata = relationship("AudioMetadata", back_populates="analysis", uselist=False, cascade="all, delete-orphan")
     authenticity_result = relationship("AuthenticityResultModel", back_populates="analysis", uselist=False, cascade="all, delete-orphan")
     speaker_result = relationship("SpeakerResultModel", back_populates="analysis", uselist=False, cascade="all, delete-orphan")

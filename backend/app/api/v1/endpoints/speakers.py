@@ -4,13 +4,11 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-
 from backend.app.db.session import get_db
 from backend.app.db.models import SpeakerProfile
 from backend.app.core.config import settings
 
 router = APIRouter()
-
 
 class SpeakerEnrollRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)

@@ -1,13 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-
 from backend.app.db.session import get_db
 from backend.app.db.repositories.analysis_repo import AnalysisRepository
 from backend.app.services.report_service import report_service
 from backend.app.intelligence.explanations import build_evidence_explanation
-
 router = APIRouter()
-
 
 @router.get(
     "/analysis/{analysis_id}/report",

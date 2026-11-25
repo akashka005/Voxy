@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { AudioWaveform, Check, Download, Loader2, Plus, Share2, Sparkles, UploadCloud } from 'lucide-react';
+import { AudioWaveform, Check, Download, Loader2, Plus, Share2, Sparkles, Trash2, UploadCloud } from 'lucide-react';
 import type { ExportStatus } from '../App';
 import type { AssessmentCase, AudioSegment, TopEngineStatus } from '../data';
 import { AudioAnalysis } from '../components/AudioAnalysis';
@@ -25,6 +25,7 @@ interface ThreatAssessmentPageProps {
   onResetWorkspace: () => void;
   onNotify: (message: string) => void;
   onPlaybackChange?: (playing: boolean) => void;
+  onDeleteCase?: (caseId: string) => void;
 }
 
 const containerVariants = {
@@ -58,6 +59,7 @@ export function ThreatAssessmentPage({
   onResetWorkspace,
   onNotify,
   onPlaybackChange,
+  onDeleteCase,
 }: ThreatAssessmentPageProps) {
   const activeCase = (cases.find((c) => c.id === activeCaseId) ?? cases[0]) as AssessmentCase | undefined;
 
@@ -267,6 +269,18 @@ export function ThreatAssessmentPage({
             <Share2 className="w-4 h-4 text-[#394563]" aria-hidden="true" />
             <span>Share</span>
           </button>
+
+          {activeCase && onDeleteCase && (
+            <button
+              type="button"
+              onClick={() => onDeleteCase(activeCase.id)}
+              title={`Delete scan ${activeCase.id}`}
+              className="glass-pill rounded-full h-9.5 px-3.5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#DC2626] hover:bg-[#FEE2E2]/70 whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-[#EF4444] transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-[#DC2626]" aria-hidden="true" />
+              <span>Delete Scan</span>
+            </button>
+          )}
         </div>
       </motion.div>
 

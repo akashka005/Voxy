@@ -43,17 +43,11 @@ async def create_analysis_job(
     analysis_options: Optional[str] = Form(None, description="Optional JSON-encoded analysis options"),
     db: Session = Depends(get_db),
 ) -> AnalysisCreateResponse:
-    """
-    Accepts audio upload, saves file safely, and enqueues threat assessment job.
-    Never trusts uploaded filename or raw MIME type.
-    """
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Uploaded file must have a valid filename.",
         )
-
-    # Parse options if provided
     parsed_options = AnalysisOptions()
     if analysis_options:
         try:
@@ -64,8 +58,6 @@ async def create_analysis_job(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid analysis_options JSON format: {str(e)}",
             )
-
-    # Read uploaded bytes safely
     try:
         content = await file.read()
     except Exception as e:
@@ -79,12 +71,8 @@ async def create_analysis_job(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Uploaded file is empty (0 bytes).",
         )
-
-    # Extract extension safely
     extension = file.filename.split(".")[-1] if "." in file.filename else "bin"
     temp_path = storage_service.save_temporary_audio(content, extension=extension)
-
-    # Register in DB and enqueue background worker
     analysis_id = analysis_service.enqueue_analysis_job(
         db=db,
         temp_file_path=temp_path,

@@ -11,7 +11,7 @@ class AudioSegment:
     end_time: float
     sample_rate: int
     num_samples: int
-    waveform: np.ndarray  # float32 1D array
+    waveform: np.ndarray
     is_speech: bool
     vad_speech_ratio: float
 
@@ -23,18 +23,11 @@ def create_overlapping_segments(
     hop_duration_seconds: float = 2.0,
     min_speech_ratio: float = 0.1,
 ) -> List[AudioSegment]:
-    """
-    Slices audio into overlapping, timestamped segments for downstream engine consumption.
-    AASIST standard: 4.0 second window (64,000 samples @ 16 kHz) with 2.0 second hop (32,000 samples).
-    Pads the final segment if needed so all segments have fixed dimension.
-    """
     window_samples = int(sample_rate * window_duration_seconds)
     hop_samples = int(sample_rate * hop_duration_seconds)
     total_samples = len(waveform)
 
     vad = SimpleEnergyVAD(sample_rate=sample_rate)
-
-    # Edge case: audio is shorter than one window
     if total_samples <= window_samples:
         padded = np.zeros(window_samples, dtype=np.float32)
         padded[:total_samples] = waveform
@@ -63,7 +56,6 @@ def create_overlapping_segments(
             seg_wave = waveform[start_sample:end_sample]
             actual_end_time = float(end_sample) / sample_rate
         else:
-            # Pad the remaining samples to reach full window_samples length
             seg_wave = np.zeros(window_samples, dtype=np.float32)
             remaining = total_samples - start_sample
             seg_wave[:remaining] = waveform[start_sample:total_samples]
@@ -84,8 +76,6 @@ def create_overlapping_segments(
                 vad_speech_ratio=speech_ratio,
             )
         )
-
         seg_idx += 1
         start_sample += hop_samples
-
     return segments

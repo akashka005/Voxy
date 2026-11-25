@@ -9,6 +9,7 @@ import {
   Plus,
   ShieldAlert,
   Sparkles,
+  Trash2,
   TrendingUp,
 } from 'lucide-react';
 import {
@@ -29,6 +30,7 @@ interface OverviewPageProps {
   activeCaseId: string;
   engineStatuses: TopEngineStatus[];
   onSelectCase: (caseId: string) => void;
+  onDeleteCase?: (caseId: string) => void;
 }
 
 /** Compute call-volume chart data from real case history instead of hardcoded values. */
@@ -88,6 +90,7 @@ export function OverviewPage({
   activeCaseId,
   engineStatuses,
   onSelectCase,
+  onDeleteCase,
 }: OverviewPageProps) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -335,27 +338,29 @@ export function OverviewPage({
               </div>
             ) : (
               <div className="space-y-2.5">
-                {cases.slice(0, 4).map((item) => {
+                {cases.map((item) => {
                   const isDanger =
                     item.threatScore.riskLevel === 'CRITICAL' ||
                     item.threatScore.riskLevel === 'HIGH';
                   return (
-                    <button
+                    <div
                       key={item.id}
-                      type="button"
-                      onClick={() => handleOpenCase(item.id)}
-                      className="w-full text-left glass-inset-tile rounded-[18px] hover:bg-white/82 p-3 flex items-center justify-between gap-3 transition-all hover:translate-x-0.5"
+                      className="w-full text-left glass-inset-tile rounded-[18px] hover:bg-white/82 p-3 flex items-center justify-between gap-3 transition-all group"
                     >
-                      <div className="min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenCase(item.id)}
+                        className="min-w-0 flex-1 text-left focus:outline-none"
+                      >
                         <div className="flex items-center gap-2">
-                          <span className="text-[13.5px] font-semibold text-[#0F1B3D] truncate">
+                          <span className="text-[13.5px] font-semibold text-[#0F1B3D] truncate group-hover:text-[#2563EB] transition-colors">
                             {item.title}
                           </span>
                         </div>
                         <div className="text-[11.5px] text-[#5B6785] truncate mt-0.5">
                           {item.id} · {item.sourceChannel}
                         </div>
-                      </div>
+                      </button>
 
                       <div className="flex items-center gap-2 shrink-0">
                         <span
@@ -367,9 +372,30 @@ export function OverviewPage({
                         >
                           {item.threatScore.score.toFixed(1)}
                         </span>
-                        <ArrowUpRight className="w-4 h-4 text-[#5B6785]" />
+                        {onDeleteCase && (
+                          <button
+                            type="button"
+                            title={`Delete ${item.title}`}
+                            aria-label={`Delete ${item.title}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteCase(item.id);
+                            }}
+                            className="w-7 h-7 rounded-lg text-[#8C9BB5] hover:text-[#DC2626] hover:bg-[#FEE2E2]/70 flex items-center justify-center transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCase(item.id)}
+                          aria-label="Open assessment"
+                          className="text-[#5B6785] hover:text-[#0F1B3D] p-0.5"
+                        >
+                          <ArrowUpRight className="w-4 h-4" />
+                        </button>
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>

@@ -4,21 +4,13 @@ from typing import Tuple, Optional
 import numpy as np
 import soundfile as sf
 from backend.app.core.config import settings
-
-
 class AudioDecodeError(ValueError):
-    """Raised when audio decoding or validation fails."""
     pass
-
-
 class AudioLimitExceededError(ValueError):
-    """Raised when audio exceeds configured size or duration boundaries."""
     pass
-
-
 @dataclass
 class DecodedAudio:
-    waveform: np.ndarray  # float32 array, shape: (samples,) if mono or (channels, samples)
+    waveform: np.ndarray
     sample_rate: int
     channels: int
     duration_seconds: float
@@ -33,10 +25,6 @@ def decode_audio_file(
     max_duration_seconds: Optional[int] = None,
     max_size_mb: Optional[int] = None,
 ) -> DecodedAudio:
-    """
-    Decodes and validates an audio file using real stream inspection.
-    Enforces duration and size limits. Never trusts extension or MIME headers.
-    """
     if not os.path.exists(file_path):
         raise AudioDecodeError("Target audio file does not exist on disk.")
 
@@ -49,8 +37,6 @@ def decode_audio_file(
         raise AudioLimitExceededError(
             f"File size ({file_size_bytes / (1024 * 1024):.2f} MB) exceeds maximum allowed limit of {limit_mb} MB."
         )
-
-    # Inspect file metadata using soundfile
     try:
         info = sf.info(file_path)
     except Exception as e:
@@ -65,8 +51,6 @@ def decode_audio_file(
         raise AudioLimitExceededError(
             f"Audio duration ({duration_seconds:.1f} s) exceeds maximum allowed duration of {limit_duration} s."
         )
-
-    # Real waveform decoding
     try:
         data, sample_rate = sf.read(file_path, dtype="float32", always_2d=False)
     except Exception as e:

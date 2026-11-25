@@ -4,21 +4,15 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-
 from backend.app.core.config import settings
 from backend.app.schemas.common import EngineStatus
 from backend.app.db.session import get_db
-
 router = APIRouter()
-
-
 class EngineHealthStatus(BaseModel):
     engine_name: str
     status: EngineStatus
     details: str
     limitations: List[str] = []
-
-
 class HealthResponse(BaseModel):
     status: str
     app_name: str
@@ -27,22 +21,13 @@ class HealthResponse(BaseModel):
     timestamp: datetime
     database: str
     engines: Dict[str, EngineHealthStatus]
-
-
 @router.get("/health", response_model=HealthResponse, summary="Backend and Engine Availability")
 def get_health(db: Session = Depends(get_db)) -> HealthResponse:
-    """
-    Returns application health, database connectivity status, and each engine's availability.
-    A missing or unconfigured engine reports UNAVAILABLE, never a fabricated status.
-    """
-    # Check DB connectivity
     db_status = "connected"
     try:
         db.execute(text("SELECT 1"))
     except Exception as e:
         db_status = f"unreachable: {str(e)}"
-
-    # Determine real engine availabilities based on configuration
     engines: Dict[str, EngineHealthStatus] = {
         "authenticity": EngineHealthStatus(
             engine_name="Authenticity / Anti-spoofing",

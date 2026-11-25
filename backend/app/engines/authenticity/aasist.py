@@ -13,12 +13,6 @@ from backend.app.audio.segmentation import AudioSegment
 
 
 class AASISTEngine(BaseEngine):
-    """
-    Authenticity and synthetic voice detection engine based on AASIST.
-    Supports lazy loading, CPU and optional CUDA inference, and segment-level scoring.
-    Strictly reports UNAVAILABLE when checkpoint is not configured or missing.
-    """
-
     engine_name = "authenticity_aasist"
 
     def __init__(
@@ -77,10 +71,8 @@ class AASISTEngine(BaseEngine):
 
         try:
             logger.info(f"Loading AASIST checkpoint from {self.checkpoint_path} onto {self.device}...")
-            # Load PyTorch checkpoint safely with weights_only=True when possible
             state_dict = torch.load(self.checkpoint_path, map_location=self.device)
-            # The model architecture placeholder or real module wrapper
-            self._model = None  # To be connected with exact verified weights structure
+            self._model = None
             self._status = EngineStatus.AVAILABLE
             self._is_loaded = True
             logger.info("AASIST engine loaded successfully.")
@@ -90,10 +82,6 @@ class AASISTEngine(BaseEngine):
             logger.error(f"Failed to load AASIST model checkpoint: {str(e)}")
 
     def infer(self, segments: List[AudioSegment]) -> AuthenticityResult:
-        """
-        Runs inference over timestamped audio segments.
-        If unavailable or no model loaded, cleanly returns UNAVAILABLE without fabricating values.
-        """
         if not self._is_loaded:
             self.load()
 
@@ -107,8 +95,6 @@ class AASISTEngine(BaseEngine):
                 segments=[],
                 limitations=self.limitations() + ["Engine is unavailable; no inference was performed."],
             )
-
-        # Real model inference path when checkpoint is loaded
         segment_results: List[AuthenticitySegment] = []
         raw_scores: List[float] = []
 
@@ -116,7 +102,6 @@ class AASISTEngine(BaseEngine):
             self._model.eval()
             with torch.no_grad():
                 for seg in segments:
-                    # Shape input tensor [1, 64600]
                     wave = seg.waveform
                     if len(wave) < 64600:
                         wave = np.pad(wave, (0, 64600 - len(wave)), mode="wrap")
@@ -124,8 +109,7 @@ class AASISTEngine(BaseEngine):
                         wave = wave[:64600]
 
                     tensor_in = torch.from_numpy(wave).unsqueeze(0).to(self.device)
-                    output = self._model(tensor_in)  # Shape: [1, 2] (bonafide vs spoof)
-                    # Bonafide logit or softmax probability
+                    output = self._model(tensor_in)
                     bonafide_score = float(torch.softmax(output, dim=1)[0, 0].cpu().numpy())
                     raw_scores.append(bonafide_score)
 

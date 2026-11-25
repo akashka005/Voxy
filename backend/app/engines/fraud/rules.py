@@ -8,12 +8,9 @@ class FraudRule:
     rule_id: str
     category: str
     patterns: List[Pattern]
-    severity: str  # LOW, MEDIUM, HIGH, CRITICAL
+    severity: str
     explanation: str
-
-
 FRAUD_RULES: List[FraudRule] = [
-    # 1. Credential & OTP harvesting
     FraudRule(
         rule_id="RULE_OTP_HARVESTING",
         category="credential_harvesting",
@@ -25,7 +22,6 @@ FRAUD_RULES: List[FraudRule] = [
         severity="CRITICAL",
         explanation="Attempting to harvest sensitive credentials, one-time passwords (OTP), or payment PINs.",
     ),
-    # 2. Urgent Financial Transfers
     FraudRule(
         rule_id="RULE_URGENT_TRANSFER",
         category="urgent_transfer",
@@ -37,7 +33,6 @@ FRAUD_RULES: List[FraudRule] = [
         severity="HIGH",
         explanation="Demanding immediate wire transfers, cryptocurrency deposits, or gift card purchases to resolve an alleged problem.",
     ),
-    # 3. Emergency & Emotional Coercion
     FraudRule(
         rule_id="RULE_EMERGENCY_PRESSURE",
         category="emergency_pressure",
@@ -49,7 +44,6 @@ FRAUD_RULES: List[FraudRule] = [
         severity="HIGH",
         explanation="Using threats of arrest, legal prosecution, account termination, or family distress to induce panic.",
     ),
-    # 4. Secrecy & Isolation
     FraudRule(
         rule_id="RULE_SECRECY_ISOLATION",
         category="secrecy_isolation",
@@ -60,7 +54,6 @@ FRAUD_RULES: List[FraudRule] = [
         severity="HIGH",
         explanation="Instructing the victim to maintain secrecy and not consult family members or bank personnel.",
     ),
-    # 5. Authority Impersonation
     FraudRule(
         rule_id="RULE_AUTHORITY_IMPERSONATION",
         category="authority_impersonation",
@@ -71,7 +64,6 @@ FRAUD_RULES: List[FraudRule] = [
         severity="MEDIUM",
         explanation="Impersonating law enforcement, tax agencies, or bank security teams to establish artificial credibility.",
     ),
-    # 6. Verification Bypass
     FraudRule(
         rule_id="RULE_VERIFICATION_BYPASS",
         category="verification_bypass",

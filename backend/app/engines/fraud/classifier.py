@@ -7,13 +7,6 @@ from backend.app.engines.fraud.rules import FRAUD_RULES, FraudRule
 
 
 class FraudRuleEngine(BaseEngine):
-    """
-    Explainable, rule-based social engineering and fraud-intent analysis engine.
-    Detects credential harvesting, urgent transfer demands, emergency coercion,
-    secrecy instructions, authority impersonation, and verification bypass.
-    Strictly independent of audio authenticity.
-    """
-
     engine_name = "fraud_rule_baseline"
 
     def __init__(self, rules: Optional[List[FraudRule]] = None):
@@ -39,7 +32,6 @@ class FraudRuleEngine(BaseEngine):
         return list(self._limitations)
 
     def load(self) -> None:
-        # Rules are pre-compiled regular expressions in memory
         pass
 
     def infer(
@@ -47,9 +39,6 @@ class FraudRuleEngine(BaseEngine):
         transcript: str,
         segments: Optional[List[TranscriptSegment]] = None,
     ) -> FraudIntelligenceResult:
-        """
-        Analyzes full transcript and optional timestamped segments for social engineering patterns.
-        """
         if not transcript or not transcript.strip():
             return FraudIntelligenceResult(
                 availability=EngineStatus.AVAILABLE,
@@ -62,20 +51,15 @@ class FraudRuleEngine(BaseEngine):
         detected_categories = set()
         evidence_items: List[FraudEvidenceItem] = []
 
-        # Analyze full transcript
         for rule in self.rules:
             matched_for_rule = False
             for pattern in rule.patterns:
                 for match in pattern.finditer(transcript):
                     matched_for_rule = True
                     detected_categories.add(rule.category)
-
-                    # Extract context window around match
                     start_pos = max(0, match.start() - 30)
                     end_pos = min(len(transcript), match.end() + 30)
                     excerpt = transcript[start_pos:end_pos].strip()
-
-                    # Find corresponding segment timestamp if segments provided
                     start_time = None
                     end_time = None
                     if segments:
@@ -97,7 +81,6 @@ class FraudRuleEngine(BaseEngine):
                             explanation=rule.explanation,
                         )
                     )
-                    # Limit duplicate matches per pattern to keep evidence concise
                     break
                 if matched_for_rule:
                     break

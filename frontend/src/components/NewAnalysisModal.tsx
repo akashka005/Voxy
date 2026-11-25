@@ -26,6 +26,7 @@ interface NewAnalysisModalProps {
   onSelectCase: (caseId: string) => void;
   onCreateCustomCase: (title: string, channel: string, transcript: string) => void;
   onCreateAudioCase: (newCase: AssessmentCase) => void;
+  onDeleteCase?: (caseId: string) => void;
   onSubmitAudioToBackend?: (
     file: File,
     title: string,
@@ -59,6 +60,7 @@ export function NewAnalysisModal({
   onSelectCase,
   onCreateCustomCase,
   onCreateAudioCase,
+  onDeleteCase,
   onSubmitAudioToBackend,
 }: NewAnalysisModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -240,27 +242,29 @@ export function NewAnalysisModal({
             {cases.map((item) => {
               const selected = item.id === activeCaseId;
               return (
-                <button
+                <div
                   key={item.id}
-                  type="button"
-                  onClick={() => {
-                    onSelectCase(item.id);
-                    onClose();
-                  }}
                   className={`w-full text-left p-2.5 px-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
                     selected
                       ? 'bg-[#EFF6FF] border-[#93C5FD]'
                       : 'bg-white/70 border-slate-200/80 hover:border-[#93C5FD]'
                   }`}
                 >
-                  <div className="min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectCase(item.id);
+                      onClose();
+                    }}
+                    className="min-w-0 flex-1 text-left focus:outline-none"
+                  >
                     <div className="text-[13px] font-semibold text-[#0F1B3D] truncate">
                       {item.title}
                     </div>
                     <div className="text-[11px] text-[#5B6785] truncate">
                       {item.id} · {item.sourceChannel}
                     </div>
-                  </div>
+                  </button>
                   <div className="flex items-center gap-2 shrink-0">
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold tabular-nums ${
@@ -271,9 +275,23 @@ export function NewAnalysisModal({
                     >
                       {item.threatScore.score.toFixed(1)}
                     </span>
+                    {onDeleteCase && (
+                      <button
+                        type="button"
+                        title={`Delete ${item.title}`}
+                        aria-label={`Delete ${item.title}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteCase(item.id);
+                        }}
+                        className="w-6 h-6 rounded-md text-[#8C9BB5] hover:text-[#DC2626] hover:bg-[#FEE2E2]/70 flex items-center justify-center transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     {selected && <Check className="w-4 h-4 text-[#2563EB]" />}
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>

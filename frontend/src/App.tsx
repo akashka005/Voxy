@@ -30,6 +30,7 @@ import {
   fetchHealth,
   fetchHistory,
   fetchAnalysis,
+  deleteAnalysis,
   fetchSpeakers,
   enrollSpeaker,
   submitAudioAnalysis,
@@ -75,6 +76,7 @@ function AnimatedRoutes({
   onTickTelemetry,
   onRunDiagnostics,
   onPlaybackChange,
+  onDeleteCase,
 }: {
   cases: AssessmentCase[];
   activeCaseId: string;
@@ -97,6 +99,7 @@ function AnimatedRoutes({
   onTickTelemetry: () => void;
   onRunDiagnostics: () => void;
   onPlaybackChange: (playing: boolean) => void;
+  onDeleteCase: (caseId: string) => void;
 }) {
   const location = useLocation();
 
@@ -118,6 +121,7 @@ function AnimatedRoutes({
               onResetWorkspace={onResetWorkspace}
               onNotify={onNotify}
               onPlaybackChange={onPlaybackChange}
+              onDeleteCase={onDeleteCase}
             />
           }
         />
@@ -129,6 +133,7 @@ function AnimatedRoutes({
               activeCaseId={activeCaseId}
               engineStatuses={engineStatuses}
               onSelectCase={onSelectCase}
+              onDeleteCase={onDeleteCase}
             />
           }
         />
@@ -549,6 +554,23 @@ function WorkspaceShell() {
     showToast(`Cryptographically signed ${reportId}`);
   };
 
+  const handleDeleteCase = async (caseId: string) => {
+    try {
+      await deleteAnalysis(caseId);
+    } catch (err) {
+      console.warn('Backend delete error (proceeding with local purge):', err);
+    }
+    setCases((prev) => {
+      const remaining = prev.filter((c) => c.id !== caseId);
+      if (activeCaseId === caseId) {
+        setActiveCaseId(remaining[0]?.id ?? '');
+      }
+      return remaining;
+    });
+    setReports((prev) => prev.filter((r) => r.caseId !== caseId));
+    showToast(`Deleted scan [${caseId.slice(0, 8)}]`);
+  };
+
   const handleAddSpeaker = async (name: string, role: string, department: string) => {
     try {
       const created = await enrollSpeaker(name, true, department);
@@ -700,6 +722,7 @@ function WorkspaceShell() {
           onTickTelemetry={handleTickTelemetry}
           onRunDiagnostics={handleRunDiagnostics}
           onPlaybackChange={setIsAudioPlaying}
+          onDeleteCase={handleDeleteCase}
         />
       </main>
 
@@ -746,6 +769,7 @@ function WorkspaceShell() {
         onSelectCase={handleSelectCaseFromModal}
         onCreateCustomCase={handleCreateCustomCaseFromModal}
         onCreateAudioCase={handleCreateAudioCaseFromModal}
+        onDeleteCase={handleDeleteCase}
         onSubmitAudioToBackend={handleSubmitAudioToBackend}
       />
 

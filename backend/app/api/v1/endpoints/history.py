@@ -1,14 +1,10 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-
 from backend.app.db.session import get_db
 from backend.app.db.repositories.analysis_repo import AnalysisRepository
 from backend.app.schemas.analysis import AnalysisHistoryResponse, AnalysisSummary
 from backend.app.schemas.common import JobStatus
-
 router = APIRouter()
-
-
 @router.get(
     "/history",
     response_model=AnalysisHistoryResponse,
