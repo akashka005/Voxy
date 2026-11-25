@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, Keyboard, RotateCcw, Search, ShieldCheck, Volume2, VolumeX, X } from 'lucide-react';
+import { Search, Volume2, VolumeX, X } from 'lucide-react';
 import type { AssessmentCase, TopEngineStatus } from '../data';
 import { filterAnalyses } from '../utils/forensics';
 import {
@@ -27,21 +27,14 @@ export function TopBar({
   onSelectCase,
   searchQuery,
   onSearchChange,
-  onResetWorkspace,
 }: TopBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [searchFocused, setSearchFocused] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [activeProfileRole, setActiveProfileRole] = useState('Lead Forensic Analyst');
   const { soundEnabled, toggleSound } = useTactileAudio();
 
   const isMac = useMemo(() => detectMacOS(), []);
   const searchShortcutHint = useMemo(
     () => formatShortcutBadge(APP_SHORTCUTS.find((s) => s.id === 'focus-search')!, isMac),
-    [isMac],
-  );
-  const helpShortcutHint = useMemo(
-    () => formatShortcutBadge(APP_SHORTCUTS.find((s) => s.id === 'toggle-help')!, isMac),
     [isMac],
   );
 
@@ -52,7 +45,6 @@ export function TopBar({
     };
     const handleDismissPopovers = () => {
       setSearchFocused(false);
-      setProfileOpen(false);
       inputRef.current?.blur();
     };
     window.addEventListener(SHORTCUT_DOM_EVENTS.FOCUS_SEARCH, handleFocusSearch);
@@ -201,19 +193,6 @@ export function TopBar({
           );
         })}
 
-        {/* Global Keyboard Shortcuts Guide Button */}
-        <button
-          type="button"
-          onClick={() =>
-            window.dispatchEvent(new CustomEvent(SHORTCUT_DOM_EVENTS.OPEN_SHORTCUT_GUIDE))
-          }
-          aria-label="Keyboard shortcuts"
-          title={`Keyboard shortcuts (${helpShortcutHint} or ?)`}
-          className="glass-lens-orb rounded-full w-10 h-10 flex items-center justify-center text-[#394563] hover:text-[#0F1B3D] shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B9BF0]"
-        >
-          <Keyboard className="w-4 h-4" aria-hidden="true" />
-        </button>
-
         {/* Tactile UI Audio Feedback Toggle */}
         <button
           type="button"
@@ -229,64 +208,6 @@ export function TopBar({
             <VolumeX className="w-4 h-4 text-[#5B6785]" aria-hidden="true" />
           )}
         </button>
-
-        {/* User Avatar Dropdown */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setProfileOpen((v) => !v)}
-            aria-expanded={profileOpen}
-            aria-label="Analyst account menu"
-            className="flex items-center gap-1.5 pl-1 pr-1.5 py-1 rounded-full hover:bg-white/45 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B9BF0]"
-          >
-            <span className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2B3D6B] to-[#0F1B3D] text-white text-[13px] font-semibold flex items-center justify-center shadow-[0_8px_20px_rgba(15,27,61,0.3),inset_0_1.5px_0_rgba(255,255,255,0.45)] border border-white/80">
-              AK
-            </span>
-            <ChevronDown className="w-4 h-4 text-[#475577]" aria-hidden="true" />
-          </button>
-
-          {profileOpen && (
-            <div className="absolute right-0 mt-2 w-60 rounded-[22px] bg-white/96 border border-white shadow-[0_18px_48px_rgba(25,45,105,0.2),inset_0_1px_0_rgba(255,255,255,1)] p-2 z-40">
-              <div className="px-3 py-2 border-b border-slate-200/70">
-                <div className="text-[13px] font-semibold text-[#0F1B3D]">Alex Kapoor</div>
-                <div className="text-[11.5px] text-[#5B6785]">{activeProfileRole}</div>
-              </div>
-              <div className="pt-1.5 space-y-1">
-                {['Lead Forensic Analyst', 'SOC Escalation Reviewer'].map((role) => (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => {
-                      setActiveProfileRole(role);
-                      setProfileOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-1.5 rounded-xl text-[12.5px] flex items-center gap-2 transition-colors ${
-                      activeProfileRole === role
-                        ? 'bg-[#EFF6FF] text-[#1D4ED8] font-medium'
-                        : 'text-[#394563] hover:bg-slate-100/75'
-                    }`}
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                    <span>{role}</span>
-                  </button>
-                ))}
-                {onResetWorkspace && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onResetWorkspace();
-                      setProfileOpen(false);
-                    }}
-                    className="w-full text-left px-3 py-1.5 mt-1 border-t border-slate-200/70 rounded-xl text-[12.5px] font-medium text-[#B7791F] hover:bg-[#FEF3C7]/60 flex items-center gap-2 transition-colors"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5 shrink-0" />
-                    <span>Reset Demo Data</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
       </div>
     </header>
   );
