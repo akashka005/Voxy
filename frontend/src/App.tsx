@@ -109,6 +109,7 @@ function AnimatedRoutes({
             <ThreatAssessmentPage
               cases={cases}
               activeCaseId={activeCaseId}
+              engineStatuses={engineStatuses}
               exportStatus={exportStatus}
               onSelectCase={onSelectCase}
               onOpenNewAnalysis={onOpenNewAnalysis}
@@ -198,7 +199,7 @@ function WorkspaceShell() {
   const { soundEnabled, toggleSound } = useTactileAudio();
 
   // Clear stale localStorage mock data from prior sessions
-  const WORKSPACE_VERSION = 'v2-live-backend';
+  const WORKSPACE_VERSION = 'v4-zero-mock-data';
   if (typeof window !== 'undefined' &&
       localStorage.getItem('voxsentinel_workspace_version') !== WORKSPACE_VERSION) {
     clearWorkspaceState();
@@ -208,7 +209,7 @@ function WorkspaceShell() {
   const initialPersisted = useRef(
     loadWorkspaceState({
       cases: SECONDARY_CASES,
-      activeCaseId: SECONDARY_CASES[0].id,
+      activeCaseId: SECONDARY_CASES[0]?.id ?? '',
       reports: INITIAL_REPORTS,
       speakers: INITIAL_SPEAKERS,
     }),
@@ -229,7 +230,7 @@ function WorkspaceShell() {
   const exportResetTimerRef = useRef<number | null>(null);
   const exportPendingTimerRef = useRef<number | null>(null);
 
-  const activeCase = cases.find((c) => c.id === activeCaseId) ?? cases[0];
+  const activeCase = (cases.find((c) => c.id === activeCaseId) ?? cases[0]) as AssessmentCase | undefined;
   const evidenceCase = evidenceCaseId
     ? cases.find((c) => c.id === evidenceCaseId) ?? null
     : null;
@@ -259,30 +260,41 @@ function WorkspaceShell() {
 
         // 2. Fetch Investigation History
         const historyRes = await fetchHistory(1, 20);
-        if (isMounted && historyRes.items && historyRes.items.length > 0) {
-          const fullCases = await Promise.all(
-            historyRes.items.map(async (item) => {
-              try {
-                const full = await fetchAnalysis(item.analysis_id);
-                return transformBackendAnalysisToCase(full);
-              } catch {
-                return null;
-              }
-            }),
-          );
-          const validCases = fullCases.filter((c): c is AssessmentCase => c !== null);
-          if (validCases.length > 0 && isMounted) {
-            setCases(validCases);
-            setActiveCaseId((prev) => (validCases.some((c) => c.id === prev) ? prev : validCases[0].id));
-            setReports(validCases.map(transformBackendCaseToReport));
+        if (isMounted) {
+          if (historyRes.items && historyRes.items.length > 0) {
+            const fullCases = await Promise.all(
+              historyRes.items.map(async (item) => {
+                try {
+                  const full = await fetchAnalysis(item.analysis_id);
+                  return transformBackendAnalysisToCase(full);
+                } catch {
+                  return null;
+                }
+              }),
+            );
+            const validCases = fullCases.filter((c): c is AssessmentCase => c !== null);
+            if (validCases.length > 0 && isMounted) {
+              setCases(validCases);
+              setActiveCaseId((prev) => (validCases.some((c) => c.id === prev) ? prev : validCases[0].id));
+              setReports(validCases.map(transformBackendCaseToReport));
+            }
+          } else {
+            // Live database is empty — clean workspace with zero mock cases
+            setCases([]);
+            setActiveCaseId('');
+            setReports([]);
           }
         }
 
         // 3. Fetch Enrolled Biometric Speakers
         const backendSpeakers = await fetchSpeakers();
-        if (isMounted && backendSpeakers && backendSpeakers.length > 0) {
-          const transformed = backendSpeakers.map(transformBackendSpeakerToEnrolled);
-          setSpeakers(transformed);
+        if (isMounted) {
+          if (backendSpeakers && backendSpeakers.length > 0) {
+            const transformed = backendSpeakers.map(transformBackendSpeakerToEnrolled);
+            setSpeakers(transformed);
+          } else {
+            setSpeakers([]);
+          }
         }
       } catch (err) {
         // Fallback to persisted workspace if backend is still starting up
@@ -608,7 +620,7 @@ function WorkspaceShell() {
   }, []);
 
   const handleExportReport = useCallback(() => {
-    if (exportStatus !== 'idle') return;
+    if (exportStatus !== 'idle' || !activeCase) return;
     setExportStatus('pending');
     exportPendingTimerRef.current = window.setTimeout(() => {
       const payload = buildForensicExportPayload(activeCase);
@@ -661,7 +673,7 @@ function WorkspaceShell() {
     <div className="min-h-screen flex relative overflow-x-clip">
       <GlassBackdrop />
       <Sidebar
-        activeRiskLevel={activeCase.threatScore.riskLevel}
+        activeRiskLevel={activeCase?.threatScore?.riskLevel ?? 'LOW'}
         isAudioPlaying={isAudioPlaying}
       />
 
@@ -709,7 +721,9 @@ function WorkspaceShell() {
         onNavigate={(path) => navigate(path)}
         onOpenNewAnalysis={handleOpenNewAnalysis}
         onExportReport={handleExportReport}
-        onOpenEvidenceDrawer={() => setEvidenceCaseId(activeCase.id)}
+        onOpenEvidenceDrawer={() => {
+          if (activeCase) setEvidenceCaseId(activeCase.id);
+        }}
         onToggleSound={toggleSound}
         onFlagWatchlistSpeaker={(id) => handleUpdateSpeakerStatus(id, 'WATCHLIST')}
         onResetWorkspace={handleResetWorkspace}
@@ -727,7 +741,7 @@ function WorkspaceShell() {
       <NewAnalysisModal
         open={newAnalysisOpen}
         cases={cases}
-        activeCaseId={activeCase.id}
+        activeCaseId={activeCase?.id ?? ''}
         onClose={handleCloseNewAnalysis}
         onSelectCase={handleSelectCaseFromModal}
         onCreateCustomCase={handleCreateCustomCaseFromModal}

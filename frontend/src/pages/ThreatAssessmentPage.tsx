@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Check, Download, Loader2, Plus, Share2, Sparkles } from 'lucide-react';
+import { AudioWaveform, Check, Download, Loader2, Plus, Share2, Sparkles, UploadCloud } from 'lucide-react';
 import type { ExportStatus } from '../App';
-import type { AssessmentCase, AudioSegment } from '../data';
-import { TOP_ENGINE_STATUSES } from '../data';
+import type { AssessmentCase, AudioSegment, TopEngineStatus } from '../data';
 import { AudioAnalysis } from '../components/AudioAnalysis';
 import { EngineCard } from '../components/EngineCard';
 import { SummaryCard } from '../components/SummaryCard';
@@ -17,6 +16,7 @@ import { APP_SHORTCUTS, detectMacOS, formatShortcutBadge } from '../utils/shortc
 interface ThreatAssessmentPageProps {
   cases: AssessmentCase[];
   activeCaseId: string;
+  engineStatuses: TopEngineStatus[];
   exportStatus: ExportStatus;
   onSelectCase: (caseId: string) => void;
   onOpenNewAnalysis: () => void;
@@ -49,6 +49,7 @@ const itemVariants = {
 export function ThreatAssessmentPage({
   cases,
   activeCaseId,
+  engineStatuses,
   exportStatus,
   onSelectCase,
   onOpenNewAnalysis,
@@ -58,14 +59,14 @@ export function ThreatAssessmentPage({
   onNotify,
   onPlaybackChange,
 }: ThreatAssessmentPageProps) {
-  const activeCase = cases.find((c) => c.id === activeCaseId) ?? cases[0];
+  const activeCase = (cases.find((c) => c.id === activeCaseId) ?? cases[0]) as AssessmentCase | undefined;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
   const [volume, setVolume] = useState(0.75);
-  const [selectedSegmentId, setSelectedSegmentId] = useState(activeCase.segments[0].id);
-  const [syncedTimeSec, setSyncedTimeSec] = useState(activeCase.initialPlayheadSec);
+  const [selectedSegmentId, setSelectedSegmentId] = useState(activeCase?.segments?.[0]?.id ?? '');
+  const [syncedTimeSec, setSyncedTimeSec] = useState(activeCase?.initialPlayheadSec ?? 0);
   const [hasUserScrubbed, setHasUserScrubbed] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1.0);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -91,11 +92,12 @@ export function ThreatAssessmentPage({
 
   // Sync selected segment and playhead cursor when switching cases
   useEffect(() => {
+    if (!activeCase) return;
     setIsPlaying(false);
     setHasUserScrubbed(false);
-    setSelectedSegmentId(activeCase.segments[0].id);
-    setSyncedTimeSec(activeCase.initialPlayheadSec);
-  }, [activeCase.id, activeCase.initialPlayheadSec, activeCase.segments]);
+    setSelectedSegmentId(activeCase.segments[0]?.id ?? '');
+    setSyncedTimeSec(activeCase.initialPlayheadSec ?? 0);
+  }, [activeCase?.id, activeCase?.initialPlayheadSec, activeCase?.segments]);
 
   const handleTogglePlay = useCallback(() => {
     setHasUserScrubbed(true);
@@ -108,6 +110,7 @@ export function ThreatAssessmentPage({
 
   const handleSegmentChange = useCallback(
     (segmentId: string) => {
+      if (!activeCase) return;
       setHasUserScrubbed(true);
       setSelectedSegmentId(segmentId);
       const matched = activeCase.segments.find((s) => s.id === segmentId);
@@ -115,7 +118,7 @@ export function ThreatAssessmentPage({
         setSyncedTimeSec(matched.startSec);
       }
     },
-    [activeCase.segments],
+    [activeCase],
   );
 
   const handleTimeUpdate = useCallback((sec: number) => {
@@ -130,14 +133,16 @@ export function ThreatAssessmentPage({
   }, []);
 
   const activeSegment = useMemo(() => {
+    if (!activeCase || activeCase.segments.length === 0) return undefined;
     return (
       findActiveSegment(syncedTimeSec, activeCase.segments) ??
       activeCase.segments.find((s) => s.id === selectedSegmentId) ??
       activeCase.segments[0]
     );
-  }, [syncedTimeSec, activeCase.segments, selectedSegmentId]);
+  }, [syncedTimeSec, activeCase, selectedSegmentId]);
 
   const handleShare = async () => {
+    if (!activeCase) return;
     const shareUrl = `${window.location.origin}/?case=${encodeURIComponent(activeCase.id)}`;
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -154,12 +159,12 @@ export function ThreatAssessmentPage({
       animate="visible"
       className="flex-1 min-w-0 p-4 sm:p-5 lg:px-8 lg:py-5 relative z-10 max-w-[1460px] mx-auto w-full"
     >
-      {/* Row 1: Top Bar */}
+      {/* Row 1: Top Bar with LIVE engine statuses */}
       <motion.div variants={itemVariants}>
         <TopBar
-          statuses={TOP_ENGINE_STATUSES}
+          statuses={engineStatuses}
           cases={cases}
-          activeCaseId={activeCase.id}
+          activeCaseId={activeCase?.id ?? ''}
           onSelectCase={onSelectCase}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -265,92 +270,122 @@ export function ThreatAssessmentPage({
         </div>
       </motion.div>
 
-      {/* Main Dashboard Grid */}
-      <div className="space-y-4">
-        {/* Row 3: Audio Analysis (~65%) | Threat Score (~33%) */}
+      {/* Main Dashboard Grid or Clean Empty State */}
+      {!activeCase ? (
         <motion.div
           variants={itemVariants}
-          className="grid grid-cols-1 xl:grid-cols-[1.97fr_1fr] gap-4 items-stretch"
+          className="mt-6 flex flex-col items-center justify-center text-center p-12 sm:p-16 glass-card rounded-[28px] max-w-xl mx-auto shadow-sm border border-white/80"
         >
-          <AudioAnalysis
-            caseId={activeCase.id}
-            initialPlayheadSec={activeCase.initialPlayheadSec}
-            syncedTimeSec={syncedTimeSec}
-            durationSec={activeCase.durationSec}
-            waveformSeed={activeCase.waveformSeed}
-            customBars={activeCase.uploadedAudioSummary?.customBars}
-            spectrogramColumns={activeCase.uploadedAudioSummary?.spectrogramColumns}
-            hasSpoofArtifacts={
-              activeCase.threatScore.riskLevel === 'CRITICAL' ||
-              activeCase.threatScore.riskLevel === 'HIGH'
-            }
-            segments={activeCase.segments}
-            isPlaying={isPlaying}
-            playbackSpeed={playbackSpeed}
-            volume={volume}
-            selectedSegmentId={selectedSegmentId}
-            zoomLevel={zoomLevel}
-            isExpanded={isExpanded}
-            onTogglePlay={handleTogglePlay}
-            onStopPlayback={handleStopPlayback}
-            onSegmentChange={handleSegmentChange}
-            onTimeUpdate={handleTimeUpdate}
-            onSpeedChange={setPlaybackSpeed}
-            onVolumeChange={setVolume}
-            onZoomIn={() => setZoomLevel((z) => Math.min(1.5, Number((z + 0.25).toFixed(2))))}
-            onZoomOut={() => setZoomLevel((z) => Math.max(0.75, Number((z - 0.25).toFixed(2))))}
-            onToggleExpand={() => setIsExpanded((e) => !e)}
-          />
-
-          <ThreatGauge
-            score={activeCase.threatScore.score}
-            riskLevel={activeCase.threatScore.riskLevel}
-            evidenceSufficiency={activeCase.threatScore.evidenceSufficiency}
-            uncertainty={activeCase.threatScore.uncertainty}
-            rationale={activeCase.threatScore.rationale}
-          />
+          <div className="w-16 h-16 rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mb-4 shadow-[inset_0_1.5px_0_rgba(255,255,255,0.9)]">
+            <AudioWaveform className="w-8 h-8" />
+          </div>
+          <h2 className="text-[22px] font-semibold text-[#0F1B3D] mb-2 font-serif-display">
+            No Voice Captures Ingested
+          </h2>
+          <p className="text-[14px] text-[#5B6785] max-w-md mb-6 leading-relaxed">
+            The forensic pipeline is ready for live neural inference. Ingest or upload any raw audio recording (.wav, .mp3, .m4a) to generate real acoustic authenticity scores, Whisper transcription, and social engineering intent classification.
+          </p>
+          <button
+            type="button"
+            onClick={onOpenNewAnalysis}
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#0F1B3D] hover:bg-[#1E3063] text-white text-[13.5px] font-semibold shadow-md transition-all hover:scale-[1.02]"
+          >
+            <Plus className="w-4 h-4 text-white" />
+            <span>Ingest Voice Audio</span>
+            <kbd className="ml-1 inline-flex items-center px-2 py-0.5 rounded bg-white/20 text-[11px] font-semibold text-white">
+              {newAnalysisBadge}
+            </kbd>
+          </button>
         </motion.div>
+      ) : (
+        <div className="space-y-4">
+          {/* Row 3: Audio Analysis (~65%) | Threat Score (~33%) */}
+          <motion.div
+            variants={itemVariants}
+            className="grid grid-cols-1 xl:grid-cols-[1.97fr_1fr] gap-4 items-stretch"
+          >
+            <AudioAnalysis
+              caseId={activeCase.id}
+              initialPlayheadSec={activeCase.initialPlayheadSec}
+              syncedTimeSec={syncedTimeSec}
+              durationSec={activeCase.durationSec}
+              waveformSeed={activeCase.waveformSeed}
+              customBars={activeCase.uploadedAudioSummary?.customBars}
+              spectrogramColumns={activeCase.uploadedAudioSummary?.spectrogramColumns}
+              hasSpoofArtifacts={
+                activeCase.threatScore.riskLevel === 'CRITICAL' ||
+                activeCase.threatScore.riskLevel === 'HIGH'
+              }
+              segments={activeCase.segments}
+              isPlaying={isPlaying}
+              playbackSpeed={playbackSpeed}
+              volume={volume}
+              selectedSegmentId={selectedSegmentId}
+              zoomLevel={zoomLevel}
+              isExpanded={isExpanded}
+              onTogglePlay={handleTogglePlay}
+              onStopPlayback={handleStopPlayback}
+              onSegmentChange={handleSegmentChange}
+              onTimeUpdate={handleTimeUpdate}
+              onSpeedChange={setPlaybackSpeed}
+              onVolumeChange={setVolume}
+              onZoomIn={() => setZoomLevel((z) => Math.min(1.5, Number((z + 0.25).toFixed(2))))}
+              onZoomOut={() => setZoomLevel((z) => Math.max(0.75, Number((z - 0.25).toFixed(2))))}
+              onToggleExpand={() => setIsExpanded((e) => !e)}
+            />
 
-        {/* Row 4: Four Engine Cards (A, B, C, D) */}
-        <motion.div variants={itemVariants}>
-          <EngineCard
-            engines={activeCase.engines}
-            isPlaying={isPlaying}
-            activeSegment={activeSegment}
-            onTogglePlayTranscript={handleTogglePlay}
-            onOpenFullTranscript={() => setTranscriptOpen(true)}
-          />
-        </motion.div>
+            <ThreatGauge
+              score={activeCase.threatScore.score}
+              riskLevel={activeCase.threatScore.riskLevel}
+              evidenceSufficiency={activeCase.threatScore.evidenceSufficiency}
+              uncertainty={activeCase.threatScore.uncertainty}
+              rationale={activeCase.threatScore.rationale}
+            />
+          </motion.div>
 
-        {/* Row 5: Temporal Anomaly Analysis (~68%) | Threat Assessment Summary (~30%) */}
-        <motion.div
-          variants={itemVariants}
-          className="grid grid-cols-1 xl:grid-cols-[2.25fr_1fr] gap-4 items-stretch"
-        >
-          <TemporalChart
-            data={activeCase.temporalSeries}
-            syncedTimeSec={hasUserScrubbed ? syncedTimeSec : undefined}
-          />
-          <SummaryCard
-            assessment={activeCase}
-            onExportReport={onExportReport}
-            onOpenEvidence={() => onOpenEvidence(activeCase.id)}
-          />
-        </motion.div>
-      </div>
+          {/* Row 4: Four Engine Cards (A, B, C, D) */}
+          <motion.div variants={itemVariants}>
+            <EngineCard
+              engines={activeCase.engines}
+              isPlaying={isPlaying}
+              activeSegment={activeSegment}
+              onTogglePlayTranscript={handleTogglePlay}
+              onOpenFullTranscript={() => setTranscriptOpen(true)}
+            />
+          </motion.div>
+
+          {/* Row 5: Temporal Anomaly Analysis (~68%) | Threat Assessment Summary (~30%) */}
+          <motion.div
+            variants={itemVariants}
+            className="grid grid-cols-1 xl:grid-cols-[2.25fr_1fr] gap-4 items-stretch"
+          >
+            <TemporalChart
+              data={activeCase.temporalSeries}
+              syncedTimeSec={hasUserScrubbed ? syncedTimeSec : undefined}
+            />
+            <SummaryCard
+              assessment={activeCase}
+              onExportReport={onExportReport}
+              onOpenEvidence={() => onOpenEvidence(activeCase.id)}
+            />
+          </motion.div>
+        </div>
+      )}
 
       {/* Synced Full Call Transcript Drawer */}
-      <TranscriptDrawer
-        open={transcriptOpen}
-        caseTitle={activeCase.title}
-        caseId={activeCase.id}
-        language={activeCase.engines.speechIntelligence.language}
-        confidence={activeCase.engines.speechIntelligence.confidence}
-        segments={activeCase.segments}
-        syncedTimeSec={syncedTimeSec}
-        onSeekToSegment={handleSeekFromTranscript}
-        onClose={() => setTranscriptOpen(false)}
-      />
+      {activeCase && (
+        <TranscriptDrawer
+          open={transcriptOpen}
+          caseTitle={activeCase.title}
+          caseId={activeCase.id}
+          language={activeCase.engines.speechIntelligence.language}
+          confidence={activeCase.engines.speechIntelligence.confidence}
+          segments={activeCase.segments}
+          syncedTimeSec={syncedTimeSec}
+          onSeekToSegment={handleSeekFromTranscript}
+          onClose={() => setTranscriptOpen(false)}
+        />
+      )}
     </motion.div>
   );
 }

@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   ArrowUpRight,
   CheckCircle2,
+  Plus,
   ShieldAlert,
   Sparkles,
   TrendingUp,
@@ -310,52 +311,69 @@ export function OverviewPage({
               <h2 className="text-[16px] font-semibold text-[#0F1B3D]">Priority Triage Queue</h2>
               <button
                 type="button"
-                onClick={() => navigate('/history')}
+                onClick={() => navigate('/')}
                 className="text-[12px] font-semibold text-[#2563EB] hover:underline"
               >
-                View all cases
+                Go to Assessment
               </button>
             </div>
 
-            <div className="space-y-2.5">
-              {cases.slice(0, 4).map((item) => {
-                const isDanger =
-                  item.threatScore.riskLevel === 'CRITICAL' ||
-                  item.threatScore.riskLevel === 'HIGH';
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => handleOpenCase(item.id)}
-                    className="w-full text-left glass-inset-tile rounded-[18px] hover:bg-white/82 p-3 flex items-center justify-between gap-3 transition-all hover:translate-x-0.5"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[13.5px] font-semibold text-[#0F1B3D] truncate">
-                          {item.title}
-                        </span>
+            {cases.length === 0 ? (
+              <div className="py-7 px-4 text-center rounded-[18px] border border-dashed border-slate-200/90 bg-white/40">
+                <p className="text-[13px] font-semibold text-[#0F1B3D]">Queue is synchronized and clear</p>
+                <p className="text-[12px] text-[#5B6785] mt-1 mb-3.5">
+                  No voice captures analyzed yet. Ingest an audio file to view real-time triage scoring.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0F1B3D] text-white text-[12px] font-semibold hover:bg-[#1E3063] transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Ingest Audio</span>
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {cases.slice(0, 4).map((item) => {
+                  const isDanger =
+                    item.threatScore.riskLevel === 'CRITICAL' ||
+                    item.threatScore.riskLevel === 'HIGH';
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleOpenCase(item.id)}
+                      className="w-full text-left glass-inset-tile rounded-[18px] hover:bg-white/82 p-3 flex items-center justify-between gap-3 transition-all hover:translate-x-0.5"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[13.5px] font-semibold text-[#0F1B3D] truncate">
+                            {item.title}
+                          </span>
+                        </div>
+                        <div className="text-[11.5px] text-[#5B6785] truncate mt-0.5">
+                          {item.id} · {item.sourceChannel}
+                        </div>
                       </div>
-                      <div className="text-[11.5px] text-[#5B6785] truncate mt-0.5">
-                        {item.id} · {item.sourceChannel}
-                      </div>
-                    </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold tabular-nums ${
-                          isDanger
-                            ? 'bg-[#FDD5DC] text-[#DC2626]'
-                            : 'bg-[#CFF5E7] text-[#0E9F7E]'
-                        }`}
-                      >
-                        {item.threatScore.score.toFixed(1)}
-                      </span>
-                      <ArrowUpRight className="w-4 h-4 text-[#5B6785]" />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold tabular-nums ${
+                            isDanger
+                              ? 'bg-[#FDD5DC] text-[#DC2626]'
+                              : 'bg-[#CFF5E7] text-[#0E9F7E]'
+                          }`}
+                        >
+                          {item.threatScore.score.toFixed(1)}
+                        </span>
+                        <ArrowUpRight className="w-4 h-4 text-[#5B6785]" />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="mt-4 pt-3 border-t border-white/70 flex items-center justify-between text-[12px] text-[#5B6785]">
