@@ -897,8 +897,4 @@ export interface NavItemConfig {
 export const SIDEBAR_NAV_ITEMS: NavItemConfig[] = [
   { path: '/overview', label: 'Overview', iconName: 'home' },
   { path: '/', label: 'Threat Assessment', iconName: 'waveform' },
-  { path: '/history', label: 'Investigation History', iconName: 'history' },
-  { path: '/reports', label: 'Forensic Reports', iconName: 'reports' },
-  { path: '/registry', label: 'Speaker Registry', iconName: 'users' },
-  { path: '/telemetry', label: 'System Telemetry', iconName: 'telemetry' },
 ];
